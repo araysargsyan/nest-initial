@@ -1,19 +1,4 @@
-import {
-    Body,
-    Controller,
-    ForbiddenException,
-    Get,
-    HttpCode,
-    HttpException,
-    HttpStatus,
-    Post,
-    Redirect,
-    UnsupportedMediaTypeException,
-    UploadedFile,
-    UploadedFiles,
-    UseFilters,
-    UseInterceptors,
-} from '@nestjs/common';
+import { Body, Controller, ForbiddenException, Get, HttpCode, HttpException, HttpStatus, Post } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserEntity } from './user.entity';
 import { HttpExceptionFilter } from '@common/core/exceptions/http-exception.filter';
@@ -38,21 +23,6 @@ const validateFileType = (extt) => {
 @Controller('user')
 export class UserController {
     constructor(private usersService: UserService) {}
-
-    @Post('/upload')
-    @UseInterceptors(
-        FileInterceptor('file', {
-            storage: diskStorage({
-                destination: './upload/profile-images',
-            }),
-            fileFilter: validateFileType('.png'),
-        }),
-    )
-    logFiles(@Body() userDto: CreateUserDto, @UploadedFile() images: Express.Multer.File) {
-        console.log(images, userDto);
-        //console.log(fileDto);
-        return 'Done';
-    }
 
     @Get('/')
     //@Redirect('https://docs.nestjs.com', 302)

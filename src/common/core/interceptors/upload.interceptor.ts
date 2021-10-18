@@ -28,7 +28,7 @@ export const UploadFilesInterceptor = (fieldName: string, count: number, fileDes
         }),
         fileFilter: fileTypeValidation(fileTypes),
         limits: {
-            files: count || 3,
+            files: count || 2,
             fileSize: 2000000,
         },
         ...localOptions,
