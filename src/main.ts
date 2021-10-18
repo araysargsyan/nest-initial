@@ -8,14 +8,13 @@ import { GlobalTransformerPipe } from './common/core/pipes/globalTransformerPipe
 async function start() {
     const app = await NestFactory.create(AppModule);
     const configService: ConfigService = app.get(ConfigService);
-    const PORT = configService.get('PORT');
 
     useContainer(app.select(AppModule), { fallbackOnErrors: true });
     app.useGlobalPipes(new GlobalTransformerPipe());
     //app.useGlobalFilters(new HttpExceptionFilter())
 
-    app.setGlobalPrefix('api');
-    await app.listen(PORT);
+    app.setGlobalPrefix(configService.get('APP_PREFIX'));
+    await app.listen(configService.get('APP_PORT'));
     Logger.verbose(await app.getUrl(), 'NestAppUrl');
 }
 
