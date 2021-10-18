@@ -1,7 +1,7 @@
 import { DynamicModule, Global, Module, Param } from '@nestjs/common';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { DbConsEnum, DbDefaultConnection } from './config/ormconfig';
+import { DbConsEnum, DbDefaultConnection } from '../config/ormconfig';
 import { MysqlConnectionOptions } from 'typeorm/driver/mysql/MysqlConnectionOptions';
 
 @Module({
