@@ -6,8 +6,7 @@ import { extname } from 'path';
 import { FileTypesEnum } from '@common/enums/file-types.enum';
 import { v4 as uuidv4 } from 'uuid';
 import { UploadFolderEnum } from '@common/enums/upload-folder.enum';
-
-const uploadsCoreDestination = './public/uploads/';
+import { uploadsCoreDestination } from '@common/constants/global.const';
 
 export const UploadFileInterceptor = (fieldName: string, fileDestination: UploadFolderEnum, fileTypes: string | [], localOptions?: MulterOptions) => {
     return FileInterceptor(fieldName, {
