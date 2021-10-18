@@ -1,7 +1,6 @@
 import { Body, Controller, ForbiddenException, Get, HttpCode, HttpException, HttpStatus, Post } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserEntity } from './user.entity';
-import { HttpExceptionFilter } from '@common/core/exceptions/http-exception.filter';
 import { CreateUserDto } from './dto/createUser.dto';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { extname } from 'path';

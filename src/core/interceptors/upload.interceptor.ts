@@ -3,7 +3,7 @@ import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-import { FileTypesEnum } from '../../enums/file-types.enum';
+import { FileTypesEnum } from '@common/enums/file-types.enum';
 import { v4 as uuidv4 } from 'uuid';
 import { UploadFolderEnum } from '@common/enums/upload-folder.enum';
 

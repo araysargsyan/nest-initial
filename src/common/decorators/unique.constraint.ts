@@ -2,7 +2,7 @@ import { registerDecorator, ValidationArguments, ValidationOptions, ValidatorCon
 import { Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/typeorm';
 import { Connection, Repository } from 'typeorm';
-import { CustomConstraintsEnum } from '../core/pipes/globalTransformerPipe';
+import { CustomConstraintsEnum } from '../../core/pipes/globalTransformerPipe';
 
 @ValidatorConstraint({ name: CustomConstraintsEnum.IS_UNIQUE, async: true })
 @Injectable()
