@@ -1,6 +1,5 @@
 import { ExceptionFilter, Catch, ArgumentsHost, HttpException, Injectable, Scope, Inject } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { MulterConfigService } from '../../upload.service';
 
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {

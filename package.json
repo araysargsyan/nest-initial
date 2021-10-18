@@ -20,7 +20,12 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "typeorm:cli": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli -f src/config/ormconfig.ts",
-    "migration:create": "cross-env NODE_ENV=development npm run typeorm:cli -- migration:create -n"
+    "migration:create": "cross-env NODE_ENV=development npm run typeorm:cli -- migration:create -n",
+    "seed:config": "ts-node -r tsconfig-paths/register ./node_modules/typeorm-seeding/dist/cli.js -n src/config/ormconfig.ts config",
+    "seed:run": "ts-node -r tsconfig-paths/register ./node_modules/typeorm-seeding/dist/cli.js -n src/config/ormconfig.ts seed",
+    "seed:run:spec": "ts-node -r tsconfig-paths/register ./node_modules/typeorm-seeding/dist/cli.js -n src/config/ormconfig.ts seed -s",
+    "schema:drop": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js schema:drop",
+    "schema:sync": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js schema:sync"
   },
   "dependencies": {
     "@nestjs/common": "^8.0.0",
@@ -32,6 +37,7 @@
     "class-transformer": "^0.4.0",
     "class-validator": "^0.13.1",
     "cross-env": "^7.0.3",
+    "file-type": "^16.5.3",
     "mysql2": "^2.3.0",
     "passport": "^0.4.1",
     "passport-facebook": "^3.0.0",
@@ -40,13 +46,15 @@
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^7.2.0",
-    "typeorm": "^0.2.37"
+    "typeorm": "^0.2.37",
+    "typeorm-seeding": "^1.6.1"
   },
   "devDependencies": {
     "@nestjs/cli": "^6.2.1",
     "@nestjs/schematics": "^8.0.0",
     "@nestjs/testing": "^8.0.0",
     "@types/express": "^4.17.13",
+    "@types/faker": "^5.5.9",
     "@types/jest": "^27.0.1",
     "@types/multer": "^1.4.7",
     "@types/node": "^16.0.0",

@@ -3,8 +3,8 @@ import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersRepository } from './user.repository';
-import { UniqueConstraint } from '@common/decorators/unique.constraint';
 import { DbConsEnum } from '../../config/ormconfig';
+import { UniqueConstraint } from '../../common/decorators/unique.constraint';
 
 @Module({
     controllers: [UserController],

@@ -3,9 +3,9 @@ import { ConfigModule } from '@nestjs/config';
 import { UserModule } from './modules/user/user.module';
 import { DbConnectionModule } from './db.module';
 import { ApeModule } from './modules/ape/ape.module';
-import { UploadModule } from './upload.module';
 import { dbConnectionsConfig } from './config/ormconfig';
 import { AuthModule } from './modules/auth/auth.module';
+import { UploadModule } from './modules/upload/upload.module';
 
 @Module({
     controllers: [],

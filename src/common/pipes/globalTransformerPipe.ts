@@ -9,7 +9,6 @@ export enum CustomConstraintsEnum {
 @Injectable()
 export class GlobalTransformerPipe implements PipeTransform {
     async transform(value: any, metaData: ArgumentMetadata) {
-        console.log(value, metaData.metatype);
         if (metaData.type !== 'custom') {
             const { object, errors } = await this.validate(metaData.metatype, value);
 
@@ -21,6 +20,32 @@ export class GlobalTransformerPipe implements PipeTransform {
         }
 
         return value;
+    }
+
+    private async validate(currentClass, value) {
+        const parentClass = Object.getPrototypeOf(currentClass);
+        const isParentClassHaveConstraints = parentClass?.constraints?.includes(...Object.values(CustomConstraintsEnum)) || false;
+        const object = plainToClass(isParentClassHaveConstraints ? parentClass : currentClass, value);
+
+        const validatorOptions: ValidatorOptions = {
+            skipMissingProperties: isParentClassHaveConstraints,
+            whitelist: true,
+            forbidNonWhitelisted: true,
+            forbidUnknownValues: true,
+        };
+        let errors = [];
+
+        if (isParentClassHaveConstraints) {
+            errors = await validate(plainToClass(parentClass, value), validatorOptions);
+        }
+        if (!errors.length) {
+            errors = await validate(plainToClass(currentClass, value), validatorOptions);
+        }
+
+        return {
+            object,
+            errors,
+        };
     }
 
     private createErrorsObj(errors) {
@@ -57,31 +82,5 @@ export class GlobalTransformerPipe implements PipeTransform {
         }
 
         return errObj;
-    }
-
-    private async validate(currentClass, value) {
-        const parentClass = Object.getPrototypeOf(currentClass);
-        const isParentClassHaveConstraints = parentClass?.constraints?.includes(...Object.values(CustomConstraintsEnum)) || false;
-        const object = plainToClass(isParentClassHaveConstraints ? parentClass : currentClass, value);
-
-        const validatorOptions: ValidatorOptions = {
-            skipMissingProperties: isParentClassHaveConstraints,
-            whitelist: true,
-            forbidNonWhitelisted: true,
-            forbidUnknownValues: true,
-        };
-        let errors = [];
-
-        if (isParentClassHaveConstraints) {
-            errors = await validate(plainToClass(parentClass, value), validatorOptions);
-        }
-        if (!errors.length) {
-            errors = await validate(plainToClass(currentClass, value), validatorOptions);
-        }
-
-        return {
-            object,
-            errors,
-        };
     }
 }
