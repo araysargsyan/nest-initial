@@ -8,7 +8,7 @@ import { MysqlConnectionOptions } from 'typeorm/driver/mysql/MysqlConnectionOpti
     providers: [ConfigService],
     imports: [
         TypeOrmModule.forRootAsync({
-            name: DbConsEnum.DEFAULT,
+            name: DbConsEnum.DEFAULT, //? not required
             imports: [ConfigModule],
             useFactory: (configService: ConfigService): TypeOrmModuleOptions => configService.get('DB_CONFIG')[DbDefaultConnection],
             inject: [ConfigService],
@@ -21,4 +21,4 @@ import { MysqlConnectionOptions } from 'typeorm/driver/mysql/MysqlConnectionOpti
         }),
     ],
 })
-export class DbConnectionModule {}
+export class DatabaseModule {}

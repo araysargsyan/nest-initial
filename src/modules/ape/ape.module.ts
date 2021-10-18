@@ -4,10 +4,6 @@ import { getConnectionToken, TypeOrmModule, TypeOrmModuleOptions } from '@nestjs
 import { ApeEntity } from './ape.entity';
 import { ApeService } from './ape.service';
 import { DbConsEnum } from '../../config/ormconfig';
-import { Connection } from 'typeorm';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { DbConnectionModule } from '../../database/database.module';
-import { config } from 'rxjs';
 
 // console.log(111111111111111, ApeEntity);
 // console.log('myau', TypeOrmModule.forFeature([ApeEntity],  'mysql').providers[0]);

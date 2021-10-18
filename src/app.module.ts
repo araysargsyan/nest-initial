@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { UserModule } from './modules/user/user.module';
-import { DbConnectionModule } from './database/database.module';
+import { DatabaseModule } from './database/database.module';
 import { ApeModule } from './modules/ape/ape.module';
 import { dbConnectionsConfig } from './config/ormconfig';
 import { AuthModule } from './modules/auth/auth.module';
@@ -18,7 +18,7 @@ import { UploadModule } from './modules/upload/upload.module';
             load: [dbConnectionsConfig],
         }),
         UploadModule,
-        DbConnectionModule,
+        DatabaseModule,
         UserModule,
         ApeModule,
         AuthModule,
