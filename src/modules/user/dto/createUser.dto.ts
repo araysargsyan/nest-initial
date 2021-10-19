@@ -3,6 +3,8 @@ import { Exclude, Expose, Transform, Type } from 'class-transformer';
 import { UserEntity } from '../user.entity';
 import { Unique, UseUnique } from '@common/decorators/unique.constraint';
 import { UserProviderInterface, UserProvidersType } from '@common/interfaces/user-providers.interface';
+import { TablesEnum } from '@common/enums/tables.enum';
+import { EntityTarget } from 'typeorm';
 
 class UserProvider implements UserProviderInterface {
     //* string or number
@@ -63,7 +65,7 @@ export class CreateUserDtoClean implements Partial<UserEntity> {
 
 @Exclude() //? only uniques
 export class CreateUserDto extends CreateUserDtoClean {
-    static readonly table: 'users'; //? tableName | entity
+    static table: TablesEnum | EntityTarget<any> = TablesEnum.USERS; //? tableName | entity
 
     @Expose()
     @Unique()

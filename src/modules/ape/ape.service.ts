@@ -3,12 +3,12 @@ import { ApeDto } from './ape.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ApeEntity } from './ape.entity';
-import { DbConnectionsEnum } from '@common/enums/db-connections.enum';
+import { DbConnections } from '@common/constants/global.const';
 
 @Injectable()
 export class ApeService {
     constructor(
-        @InjectRepository(ApeEntity, DbConnectionsEnum.MYSQL)
+        @InjectRepository(ApeEntity, DbConnections.MYSQL)
         private repo: Repository<ApeEntity>,
     ) {}
 

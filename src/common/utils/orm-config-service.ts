@@ -1,22 +1,36 @@
 import { ConfigService } from '@nestjs/config';
 import { DatabaseType, EntityTarget } from 'typeorm';
-import { DbConnectionsEnum } from '@common/enums/db-connections.enum';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { databaseRoot, dbDefaultConnection } from '@common/constants/global.const';
+import { databaseRoot, DbConnections, dbDefaultConnection, DbPrefixesEnum } from '@common/constants/global.const';
 import { OrmSeedInterface } from '@common/interfaces/orm-seed.interface';
+import { TablesEnum } from '@common/enums/tables.enum';
+import { enumToObject } from '@common/helpers/enum-to-object';
 
 export class OrmConfigService {
     constructor(private readonly config: ConfigService) {}
 
-    private readonly getEnvNamesPrefix = (type: DatabaseType = null) => {
-        switch (type) {
-            case DbConnectionsEnum.POSTGRES:
-                return 'PG';
-            case DbConnectionsEnum.MYSQL:
-                return 'MYSQL';
-            default:
-                return 'DB';
+    public readonly get = (
+        entities: EntityTarget<any>[] | string[] = [],
+        type: DatabaseType = dbDefaultConnection,
+        registerAsDefault = false,
+    ): OrmSeedInterface & TypeOrmModuleOptions => {
+        let config = {
+            name: type === dbDefaultConnection || registerAsDefault ? DbConnections.DEFAULT : type,
+            ...this.getBaseConnectionConfig(type, entities),
+        } as OrmSeedInterface & TypeOrmModuleOptions;
+
+        if (type === dbDefaultConnection || registerAsDefault) {
+            config = {
+                ...config,
+                ...this.getMigrationsAndSeedsConfig(),
+            };
         }
+        return config;
+    };
+
+    private readonly getEnvNamesPrefix = (type: DatabaseType) => {
+        const connections = enumToObject<Record<DatabaseType, string>>(DbConnections, true);
+        return DbPrefixesEnum[connections[type]];
     };
 
     private readonly getBaseConnectionConfig = (type: DatabaseType, entities: EntityTarget<any>[] | string[]): TypeOrmModuleOptions => {
@@ -43,7 +57,7 @@ export class OrmConfigService {
 
     private readonly getMigrationsAndSeedsConfig = () => ({
         migrations: [`${__dirname}/${databaseRoot}/migrations/**/*{.ts,.js}`],
-        migrationsTableName: 'migrations_history',
+        migrationsTableName: TablesEnum.MIGRATIONS,
         //migrationsRun: true,
         cli: {
             migrationsDir: `src/${databaseRoot}/migrations`,
@@ -51,19 +65,4 @@ export class OrmConfigService {
         seeds: [`src/${databaseRoot}/seeds/**/*{.ts,.js}`],
         factories: [`src/${databaseRoot}/factories/**/*{.ts,.js}`],
     });
-
-    public readonly get = (entities: EntityTarget<any>[] | string[] = [], type: DatabaseType = dbDefaultConnection, registerAsDefault = false): OrmSeedInterface & TypeOrmModuleOptions => {
-        let config = {
-            name: type === dbDefaultConnection || registerAsDefault ? DbConnectionsEnum.DEFAULT : type,
-            ...this.getBaseConnectionConfig(type, entities),
-        } as OrmSeedInterface & TypeOrmModuleOptions;
-
-        if (type === dbDefaultConnection || registerAsDefault) {
-            config = {
-                ...config,
-                ...this.getMigrationsAndSeedsConfig(),
-            };
-        }
-        return config;
-    };
 }

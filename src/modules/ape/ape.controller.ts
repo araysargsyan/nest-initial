@@ -4,8 +4,9 @@ import { ApeService } from './ape.service';
 import { UploadFolderEnum } from '@common/enums/upload-folder.enum';
 import { FileTypesEnum } from '@common/enums/file-types.enum';
 import { UploadFilesInterceptor } from '../../core/interceptors/upload.interceptor';
+import { EndPointsEnum } from '@common/enums/end-points.enum';
 
-@Controller('apes')
+@Controller(EndPointsEnum.APE)
 export class ApesController {
     constructor(private apeService: ApeService) {}
 

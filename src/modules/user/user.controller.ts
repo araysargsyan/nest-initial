@@ -1,8 +1,9 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/createUser.dto';
+import { EndPointsEnum } from '@common/enums/end-points.enum';
 
-@Controller('user')
+@Controller(EndPointsEnum.USER)
 export class UserController {
     constructor(private usersService: UserService) {}
 

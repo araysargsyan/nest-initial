@@ -1,8 +1,10 @@
 import { registerDecorator, ValidationArguments, ValidationOptions, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
 import { Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/typeorm';
-import { Connection, Repository } from 'typeorm';
-import { CustomConstraintsEnum } from '../../core/pipes/globalTransformerPipe';
+import { Connection, EntityTarget, Repository } from 'typeorm';
+import { CustomConstraintsEnum } from '@common/enums/custom-constraints.enum';
+import { TablesEnum } from '@common/enums/tables.enum';
+import { DbConnections } from '@common/constants/global.const';
 
 @ValidatorConstraint({ name: CustomConstraintsEnum.IS_UNIQUE, async: true })
 @Injectable()
@@ -10,7 +12,7 @@ export class UniqueConstraint implements ValidatorConstraintInterface {
     private existingFields: string[] = [];
     protected repo: Repository<any>;
 
-    constructor(@InjectConnection('default') private readonly connection: Connection) {}
+    constructor(@InjectConnection(DbConnections.DEFAULT) private readonly connection: Connection) {}
 
     private async getOneOrFail(operators): Promise<any> {
         const item = await this.repo.findOne({ where: operators });
@@ -22,7 +24,7 @@ export class UniqueConstraint implements ValidatorConstraintInterface {
 
         if (arrayFromObjKeys[arrayFromObjKeys.length - 1] === args.property) {
             const dto: any = args.object.constructor;
-            const table = dto.table;
+            const table: TablesEnum | EntityTarget<any> = dto.table;
             console.log(222, dto.table, 222);
             const entity = typeof table === 'string' ? this.connection.getMetadata(table).tableMetadataArgs.target : table;
             this.repo = this.connection.getRepository(entity);

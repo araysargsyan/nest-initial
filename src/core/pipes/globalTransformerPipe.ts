@@ -1,10 +1,7 @@
 import { ArgumentMetadata, BadRequestException, HttpException, HttpStatus, Inject, Injectable, PipeTransform } from '@nestjs/common';
 import { classToClass, classToPlain, deserialize, plainToClass } from 'class-transformer';
 import { validate, validateSync, ValidatorOptions } from 'class-validator';
-
-export enum CustomConstraintsEnum {
-    IS_UNIQUE = 'isUnique',
-}
+import { CustomConstraintsEnum } from '@common/enums/custom-constraints.enum';
 
 @Injectable()
 export class GlobalTransformerPipe implements PipeTransform {

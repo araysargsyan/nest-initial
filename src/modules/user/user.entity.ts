@@ -1,7 +1,8 @@
 import { BaseEntity, Column, Entity, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { UserProvidersDto } from './dto/createUser.dto';
+import { TablesEnum } from '@common/enums/tables.enum';
 
-@Entity({ name: 'users' })
+@Entity(TablesEnum.USERS)
 export class UserEntity extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number;

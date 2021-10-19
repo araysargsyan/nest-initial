@@ -1,6 +1,7 @@
 import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { TablesEnum } from '@common/enums/tables.enum';
 
-@Entity({ name: 'apes' })
+@Entity(TablesEnum.APES)
 export class ApeEntity extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number;
