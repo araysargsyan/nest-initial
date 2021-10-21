@@ -7,12 +7,13 @@ import { OrmConfigService } from '@common/utils/orm-config-service';
 const config: ConfigService = new ConfigService();
 const ormConfig = new OrmConfigService(config);
 
-//* ADD CONNECTIONS
+//* CONNECTIONS CONFIG
 export const dbConnectionsConfig = registerAs(DB_CONFIG, () => ({
     [dbDefaultConnection]: ormConfig.get([UserEntity]),
     [DbConnections.MYSQL]: ormConfig.get([ApeEntity], DbConnections.MYSQL),
 }));
 
 //* CONFIG FOR MIGRATIONS AND SEEDS
+//! MUST EXPORTED BY DEFAULT
 //export default ormConfig.get(config);
 export default ormConfig.get([ApeEntity], DbConnections.MYSQL, true);
