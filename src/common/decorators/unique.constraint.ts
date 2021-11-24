@@ -25,7 +25,6 @@ export class UniqueConstraint implements ValidatorConstraintInterface {
         if (arrayFromObjKeys[arrayFromObjKeys.length - 1] === args.property) {
             const dto: any = args.object.constructor;
             const table: TablesEnum | EntityTarget<any> = dto.table;
-            console.log(222, dto.table, 222);
             const entity = typeof table === 'string' ? this.connection.getMetadata(table).tableMetadataArgs.target : table;
             this.repo = this.connection.getRepository(entity);
 

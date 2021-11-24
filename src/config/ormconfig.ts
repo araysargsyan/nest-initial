@@ -15,5 +15,5 @@ export const dbConnectionsConfig = registerAs(DB_CONFIG, () => ({
 
 //* CONFIG FOR MIGRATIONS AND SEEDS
 //! MUST EXPORTED BY DEFAULT
-//export default ormConfig.get(config);
-export default ormConfig.get([ApeEntity], DbConnections.MYSQL, true);
+export default ormConfig.get();
+//export default ormConfig.get([ApeEntity], DbConnections.MYSQL, true);

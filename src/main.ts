@@ -3,7 +3,7 @@ import { AppModule } from './modules/app.module';
 import { ConfigService } from '@nestjs/config';
 import { useContainer } from 'class-validator';
 import { HttpCode, HttpException, HttpStatus, Logger, ValidationPipe } from '@nestjs/common';
-import { GlobalTransformerPipe } from './core/pipes/globalTransformerPipe';
+import { GlobalTransformerPipe } from './core/pipes/global-transformer.pipe';
 
 async function start() {
     const app = await NestFactory.create(AppModule);

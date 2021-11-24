@@ -8,7 +8,7 @@ import { DB_CONFIG, DbConnections, dbDefaultConnection } from '@common/constants
     providers: [ConfigService],
     imports: [
         TypeOrmModule.forRootAsync({
-            name: DbConnections.DEFAULT, //? not required
+            name: DbConnections.DEFAULT, //? not required 'default'
             imports: [ConfigModule],
             useFactory: (configService: ConfigService): TypeOrmModuleOptions => configService.get(DB_CONFIG)[dbDefaultConnection],
             inject: [ConfigService],
