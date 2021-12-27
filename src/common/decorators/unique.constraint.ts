@@ -1,10 +1,10 @@
 import { registerDecorator, ValidationArguments, ValidationOptions, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/typeorm';
 import { Connection, EntityTarget, Repository } from 'typeorm';
-import { CustomConstraintsEnum } from '@common/enums/custom-constraints.enum';
-import { TablesEnum } from '@common/enums/tables.enum';
-import { DbConnections } from '@common/constants/global.const';
+import { CustomConstraintsEnum } from '@/common/enums/custom-constraints.enum';
+import { TablesEnum } from '@/common/enums/tables.enum';
+import { dbConnections, dbDefaultConnection } from '@/common/constants/global.const';
 
 @ValidatorConstraint({ name: CustomConstraintsEnum.IS_UNIQUE, async: true })
 @Injectable()
@@ -12,7 +12,7 @@ export class UniqueConstraint implements ValidatorConstraintInterface {
     private existingFields: string[] = [];
     protected repo: Repository<any>;
 
-    constructor(@InjectConnection(DbConnections.DEFAULT) private readonly connection: Connection) {}
+    constructor(@InjectConnection('default') private readonly connection: Connection) {}
 
     private async getOneOrFail(operators): Promise<any> {
         const item = await this.repo.findOne({ where: operators });
@@ -20,8 +20,9 @@ export class UniqueConstraint implements ValidatorConstraintInterface {
     }
 
     async validate(value: number, args: ValidationArguments) {
-        const arrayFromObjKeys = Object.keys(args.object);
+        Logger.debug('', 'UniqueConstraint');
 
+        const arrayFromObjKeys = Object.keys(args.object);
         if (arrayFromObjKeys[arrayFromObjKeys.length - 1] === args.property) {
             const dto: any = args.object.constructor;
             const table: TablesEnum | EntityTarget<any> = dto.table;

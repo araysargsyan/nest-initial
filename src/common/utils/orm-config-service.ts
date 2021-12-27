@@ -1,43 +1,44 @@
 import { ConfigService } from '@nestjs/config';
-import { DatabaseType, EntityTarget } from 'typeorm';
+import { DatabaseType } from 'typeorm';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { databaseRoot, DbConnections, dbDefaultConnection, DbPrefixesEnum } from '@common/constants/global.const';
-import { OrmSeedInterface } from '@common/interfaces/orm-seed.interface';
-import { TablesEnum } from '@common/enums/tables.enum';
-import { enumToObject } from '@common/helpers/enum-to-object';
+import { databaseRoot, dbConnectionConfig, dbConnections, dbDefaultConnection } from '@/common/constants/global.const';
+import { OrmSeedInterface } from '@/common/interfaces/orm-seed.interface';
+import { TablesEnum } from '@/common/enums/tables.enum';
+import { isBoolean, isString } from 'class-validator';
+import { TEntities } from '@/common/types';
 
 export class OrmConfigService {
+    private databaseType: DatabaseType;
     constructor(private readonly config: ConfigService) {}
 
-    public readonly get = (
-        entities: EntityTarget<any>[] | string[] = [],
-        type: DatabaseType = dbDefaultConnection,
-        registerAsDefault = false,
-    ): OrmSeedInterface & TypeOrmModuleOptions => {
+    public readonly get = (entities: TEntities = null, key = 'DEFAULT', registerAsDefault = false): OrmSeedInterface & TypeOrmModuleOptions => {
+        this.databaseType = key === 'DEFAULT' ? dbDefaultConnection : dbConnectionConfig[key].type;
+        const setupMigrationsAndSeeds = entities === null;
+
         let config = {
-            name: type === dbDefaultConnection || registerAsDefault ? DbConnections.DEFAULT : type,
-            ...this.getBaseConnectionConfig(type, entities),
+            name: dbConnections[key],
+            ...this.getBaseConnectionConfig(key, setupMigrationsAndSeeds ? [] : entities),
         } as OrmSeedInterface & TypeOrmModuleOptions;
 
-        if (type === dbDefaultConnection || registerAsDefault) {
+        if ((this.databaseType === dbDefaultConnection && setupMigrationsAndSeeds) || registerAsDefault) {
             config = {
                 ...config,
                 ...this.getMigrationsAndSeedsConfig(),
             };
         }
+
         return config;
     };
 
-    private readonly getEnvNamesPrefix = (type: DatabaseType) => {
-        const connections = enumToObject<Record<DatabaseType, string>>(DbConnections, true);
-        return DbPrefixesEnum[connections[type]];
+    private readonly getEnvNamesPrefix = (key: string) => {
+        return dbConnectionConfig[key].prefix;
     };
 
-    private readonly getBaseConnectionConfig = (type: DatabaseType, entities: EntityTarget<any>[] | string[]): TypeOrmModuleOptions => {
-        const prefix = this.getEnvNamesPrefix(type); //? if call without type parameter will return default prefix
+    private readonly getBaseConnectionConfig = (key: string, entities: TEntities): TypeOrmModuleOptions => {
+        const prefix = this.getEnvNamesPrefix(key);
 
-        return {
-            type: this.config.get<DatabaseType>(`${prefix}_TYPE`, type),
+        const baseConfig = {
+            type: this.config.get<string>(`${prefix}_TYPE`, this.databaseType),
 
             host: this.config.get(`${prefix}_HOST`),
             port: this.config.get<number>(`${prefix}_PORT`),
@@ -45,14 +46,16 @@ export class OrmConfigService {
             password: this.config.get(`${prefix}_PASSWORD`),
             database: this.config.get(`${prefix}_DB`),
 
-            entities,
-            //autoLoadEntities: true,
-            //entities: ['dist/**/*.entity{.ts,.js}'],
+            entities: isBoolean(entities) && entities ? [] : isString(entities) ? [entities] : entities, //entities<string>: 'dist/**/*.entity{.ts,.js}',
+            autoLoadEntities: isBoolean(entities) && entities,
+
             synchronize: true,
 
             // logging: true,
             // logger: new OrmLogger(),
         } as TypeOrmModuleOptions;
+
+        return baseConfig;
     };
 
     private readonly getMigrationsAndSeedsConfig = () => ({

@@ -1,3 +1,5 @@
+import { FileExtension } from 'file-type/core';
+
 export enum FileTypesEnum {
     JPG = 'jpg',
     JPEG = 'jpeg',

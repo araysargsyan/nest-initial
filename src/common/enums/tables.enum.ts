@@ -1,5 +1,5 @@
 export enum TablesEnum {
     USERS = 'users',
-    APES = 'apes',
+    TESTS = 'tests',
     MIGRATIONS = 'migrations_history',
 }

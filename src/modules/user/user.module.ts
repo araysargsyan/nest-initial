@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UniqueConstraint } from '@common/decorators/unique.constraint';
+import { UniqueConstraint } from '@/common/decorators/unique.constraint';
 import { UsersRepository } from './user.repository';
 
 @Module({

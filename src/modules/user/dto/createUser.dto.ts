@@ -1,10 +1,11 @@
 import { IsDefined, IsEmail, IsNotEmpty, IsNotEmptyObject, IsOptional, IsString, Matches, ValidateIf, ValidateNested } from 'class-validator';
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
-import { UserEntity } from '../user.entity';
-import { Unique, UseUnique } from '@common/decorators/unique.constraint';
-import { UserProviderInterface, UserProvidersType } from '@common/interfaces/user-providers.interface';
-import { TablesEnum } from '@common/enums/tables.enum';
+import { Unique, UseUnique } from '@/common/decorators/unique.constraint';
+import { UserProviderInterface, UserProvidersType } from '@/common/interfaces/user-providers.interface';
+import { TablesEnum } from '@/common/enums/tables.enum';
 import { EntityTarget } from 'typeorm';
+import { Match } from '@/common/decorators/match.constraint';
+import { UserEntity } from '../user.entity';
 
 class UserProvider implements UserProviderInterface {
     //* string or number
@@ -43,12 +44,14 @@ export class CreateUserDtoClean implements Partial<UserEntity> {
     firstName: string;
 
     @IsEmail()
-    @IsNotEmpty({ always: false })
+    @IsNotEmpty()
     email: string;
 
     @IsNotEmpty()
-    @IsOptional()
     password: string;
+
+    @Match('password')
+    confirmPassword: string;
 
     //* Validate enums array
     //@IsEnum(AuthEnum, { each: true })

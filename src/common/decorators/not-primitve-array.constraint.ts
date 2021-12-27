@@ -12,7 +12,6 @@ export function IsNonPrimitiveArray(validationOptions?: ValidationOptions) {
             options: validationOptions,
             validator: {
                 validate(value: any, args: ValidationArguments) {
-                    console.log(Array.isArray(value));
                     return Array.isArray(value) && value.reduce((a, b) => a && typeof b === 'object' && !Array.isArray(b), true);
                 },
             },

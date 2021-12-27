@@ -1,6 +1,7 @@
-import { BaseEntity, Column, Entity, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { UserProvidersDto } from './dto/createUser.dto';
-import { TablesEnum } from '@common/enums/tables.enum';
+import { BaseEntity, BeforeInsert, Column, Entity, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { TablesEnum } from '@/common/enums/tables.enum';
+import { UserProvidersDto } from '@/modules/user/dto/createUser.dto';
+import { hash } from 'bcrypt';
 
 @Entity(TablesEnum.USERS)
 export class UserEntity extends BaseEntity {
@@ -25,10 +26,14 @@ export class UserEntity extends BaseEntity {
     email: string;
 
     @Column({
-        length: 300,
-        nullable: true,
+        length: 64,
+        nullable: false,
     })
     password: string;
+    @BeforeInsert()
+    private async insetPassword() {
+        this.password = this.password ? await hash(this.password, 10) : null;
+    }
 
     // @Column({
     //     //name: 'type',
@@ -37,7 +42,7 @@ export class UserEntity extends BaseEntity {
     //     array: true,
     //     nullable: true,
     // })
-    // providers: AuthEnum[];
+    // providers?: AuthEnum[];
 
     @Column({
         //name: 'type',
@@ -46,7 +51,7 @@ export class UserEntity extends BaseEntity {
         //array: true,
         nullable: true,
     })
-    providers: UserProvidersDto;
+    providers?: UserProvidersDto;
 
     @Column({
         default: false,
@@ -57,5 +62,5 @@ export class UserEntity extends BaseEntity {
         length: 300,
         nullable: true,
     })
-    banReason: string;
+    banReason?: string;
 }
