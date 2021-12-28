@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { DB_CONFIG, dbConnections, dbDefaultConnection } from '@/common/constants/global.const';
+import { DB_CONFIG, dbConnections } from '@/common/constants/database.const';
 
 @Module({
     providers: [ConfigService],

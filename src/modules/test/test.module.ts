@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { TestController } from './test.controller';
 import { TestEntity } from './test.entity';
 import { TestService } from './test.service';
-import { dbConnections } from '@/common/constants/global.const';
 import { TypeOrmModuleMultiForFeature } from '@/common/utils/type-orm-module.util';
+import { dbConnections } from '@/common/constants/database.const';
 
 @Module({
     controllers: [TestController],

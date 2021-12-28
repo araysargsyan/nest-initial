@@ -14,7 +14,6 @@ export class AuthController {
     constructor(private authService: AuthService) {}
 
     @Post('/sing-up')
-    // @UseInterceptors(UploadFilesInterceptor('image', 6, FileUploadFolderEnum.PROFILE, [FileTypes.PNG, FileTypes.JPEG, FileTypes.JPG, FileTypes.TXT]))
     @UseInterceptors(new ResponseInterceptor(SingUpResponseDto))
     async singUp(@Body() createUserDto: CreateUserDto): Promise<SingUpResponseDto> {
         return await this.authService.singUp(createUserDto);

@@ -1,11 +1,11 @@
 import { IsDefined, IsEmail, IsNotEmpty, IsNotEmptyObject, IsOptional, IsString, Matches, ValidateIf, ValidateNested } from 'class-validator';
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
 import { Unique, UseUnique } from '@/common/decorators/unique.constraint';
-import { UserProviderInterface, UserProvidersType } from '@/common/interfaces/user-providers.interface';
-import { TablesEnum } from '@/common/enums/tables.enum';
-import { EntityTarget } from 'typeorm';
+import { UserProviderInterface } from '@/common/interfaces/user-providers.interface';
 import { Match } from '@/common/decorators/match.constraint';
 import { UserEntity } from '../user.entity';
+import { IUniqueConstraintDtoConstructor } from '@/common/interfaces';
+import { UserProvidersType } from '@/common/types/user-providers.type';
 
 class UserProvider implements UserProviderInterface {
     //* string or number
@@ -66,9 +66,15 @@ export class CreateUserDtoClean implements Partial<UserEntity> {
     providers: UserProvidersDto;
 }
 
-@Exclude() //? only uniques
+@Exclude() //! only uniques
 export class CreateUserDto extends CreateUserDtoClean {
-    static table: TablesEnum | EntityTarget<any> = TablesEnum.USERS; //? tableName | entity
+    static table: IUniqueConstraintDtoConstructor['table']; //* if table in TablesEnum
+    //? static table: IUniqueConstraintDtoConstructor['table'] = TablesEnum.USERS;
+
+    constructor() {
+        super();
+        (this.constructor as IUniqueConstraintDtoConstructor<UserEntity>).table = UserEntity; //* EntityClass or TablesEnum
+    }
 
     @Expose()
     @Unique()

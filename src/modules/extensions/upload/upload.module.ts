@@ -3,7 +3,7 @@ import { MulterModule, MulterModuleOptions, MulterOptionsFactory } from '@nestjs
 import { UploadService } from './upload.service';
 import { existsSync, mkdirSync } from 'fs';
 import { ConfigService } from '@nestjs/config';
-import { PUBLIC_FOLDER, uploadsFolder } from '@/common/constants/global.const';
+import { PUBLIC_FOLDER, uploadsFolder } from '@/common/constants/upload.const';
 
 @Injectable()
 class MulterConfigService implements MulterOptionsFactory {

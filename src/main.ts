@@ -3,6 +3,7 @@ import { AppModule } from './modules/app.module';
 import { ConfigService } from '@nestjs/config';
 import { useContainer } from 'class-validator';
 import { ClassSerializerInterceptor, Logger } from '@nestjs/common';
+import { APP_PORT, APP_PREFIX } from '@/common/constants/global.const';
 
 (async function start() {
     const app = await NestFactory.create(AppModule);
@@ -12,8 +13,8 @@ import { ClassSerializerInterceptor, Logger } from '@nestjs/common';
     //app.useGlobalPipes(new GlobalTransformerPipe());
     app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
     //app.useGlobalFilters(new HttpExceptionFilter())
-    app.setGlobalPrefix(configService.get('APP_PREFIX'));
+    app.setGlobalPrefix(configService.get(APP_PREFIX, ''));
 
-    await app.listen(configService.get('APP_PORT'));
+    await app.listen(configService.get(APP_PORT));
     Logger.verbose(await app.getUrl(), 'NestAppUrl');
 })();

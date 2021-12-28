@@ -28,4 +28,12 @@ export class TestController {
     uploadTest(@UploadedFiles(SafeFilePipe) files: UploadTestDto, @Body() body: TestDto) {
         console.log('uploadTest->controller');
     }
+
+    @Post('/upload-test-nested')
+    @UseInterceptors(
+        UploadFilesInterceptor([{ name: 'documents[4]files', types: [FileTypesEnum.JPG, FileTypesEnum.JPEG], destination: UploadFolderEnum.DOCUMENTS, maxCount: 5 }]),
+    )
+    uploadTestNested(@UploadedFiles(SafeFilePipe) files: UploadTestDto, @Body() body: TestDto) {
+        console.log('uploadTest->controller');
+    }
 }

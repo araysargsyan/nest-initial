@@ -1,8 +1,8 @@
 import { ConfigService, registerAs } from '@nestjs/config';
-import { DB_CONFIG, dbConnectionConfig, dbConnections } from '@/common/constants/global.const';
-import { OrmConfigService } from '@/common/utils/orm-config-service';
 import * as _ from 'lodash';
-import { TDbConnectionConfig } from '@/common/types';
+import { OrmConfigService } from '@/common/utils/orm-config-service';
+import { TDbConnectionConfig } from '@/common/types/core';
+import { DB_CONFIG, dbConnectionConfig, dbConnections } from '@/common/constants/database.const';
 
 const config: ConfigService = new ConfigService();
 const ormConfig = new OrmConfigService(config);

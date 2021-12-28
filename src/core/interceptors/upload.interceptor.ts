@@ -7,14 +7,16 @@ import { extname } from 'path';
 import { FileTypesEnum } from '@/common/enums/file-types.enum';
 import { v4 as uuidv4 } from 'uuid';
 import { UploadFolderEnum } from '@/common/enums/upload-folder.enum';
-import { PUBLIC_FOLDER, uploadsFolder } from '@/common/constants/global.const';
 import { Request } from 'express';
 import { existsSync, mkdirSync } from 'fs';
 import { ConfigService } from '@nestjs/config';
 import { Observable } from 'rxjs';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces';
 import { UploadService } from '@/modules/extensions/upload/upload.service';
-import { fileOption } from '@/common/interfaces/file-option';
+import { isString } from 'class-validator';
+import { NOTE_SAFE_FILES, PUBLIC_FOLDER, SAFE_FILE, safeFileCheckingMode, uploadsFolder } from '@/common/constants/upload.const';
+import { SafeFileCheckingModeEnum } from '@/common/enums/safe-file-checking-mode.enum';
+import { fileOption } from '@/common/interfaces/core';
+import { TRequestFiles, TSafeFileError } from '@/common/types/core';
 
 export function UploadFilesInterceptor(
     fields: fileOption | fileOption[],
@@ -23,11 +25,11 @@ export function UploadFilesInterceptor(
     localOptions?: MulterOptions,
 ): Type<NestInterceptor> {
     class MixinInterceptor implements NestInterceptor {
+        protected uploadsCoreDestination = '';
         private readonly nestedKeyRegex: RegExp = /\[([^\]]+)]/g;
         private uncheckedFiles = [];
         private destinations = {};
-        private safeFileError: { message?: Record<string, Array<string>>; path?: string } | 'NOT_VALID' = {};
-        uploadsCoreDestination = '';
+        private safeFileError: TSafeFileError = {};
 
         constructor(@Inject(ConfigService) private configService: ConfigService, @Inject(UploadService) private uploadService: UploadService) {
             this.uploadsCoreDestination = `${configService.get(PUBLIC_FOLDER, 'public')}\\${uploadsFolder}`;
@@ -39,20 +41,12 @@ export function UploadFilesInterceptor(
             this.safeFileError = {};
             Logger.debug(JSON.stringify(this.uncheckedFiles), 'UploadFilesInterceptor');
             const ctx = context.switchToHttp();
-            const isMultiField = Array.isArray(fields);
-            const maxCountsByFieldName = this.getMaxCountsByFieldName(fields);
-            let newFields = fields;
-
-            if (isMultiField) {
-                newFields = fields.map((field) => this.createNestedFilesObject(field)).flat(1);
-            } else if (fields.name.includes('[]')) {
-                newFields = this.createNestedFilesObject(fields);
-            }
-            //console.log({ maxCountsByFieldName });
+            const newFields = this.getFields(fields);
+            console.log(newFields);
 
             let selectedInterceptor;
-            if (isMultiField && Array.isArray(newFields) && newFields.length > 1) {
-                selectedInterceptor = await this.uploadMultiFieldFiles(newFields, globalDestinations, globalFileTypes, localOptions);
+            if (Array.isArray(newFields) && newFields.length > 1) {
+                selectedInterceptor = this.uploadMultiFieldFiles(newFields, globalDestinations, globalFileTypes, localOptions);
             } else {
                 selectedInterceptor = this.uploadFiles(newFields?.[0] || newFields);
             }
@@ -61,28 +55,17 @@ export function UploadFilesInterceptor(
             await new selectedInterceptor().intercept(context, next);
             console.log('Initialize request.files');
 
-            if (this.uncheckedFiles.length) {
-                if (!this.safeFileError.message) {
-                    for (const uncheckedFile of this.uncheckedFiles) {
-                        const error = await this.uploadService.isFileExtensionSafe(uncheckedFile);
-                        if (error && error !== 'VALID') {
-                            this.safeFileError = { message: error };
-                            break;
-                        }
-                    }
-                } else {
-                    this.uploadService.remove(this.safeFileError.path);
-                }
-            }
-            if (this.safeFileError.message) {
-                await this.uploadService.removeFiles(this.uncheckedFiles);
-                throw new UnsupportedMediaTypeException(this.safeFileError.message);
-            }
-
-            this.destructureRequestFiles(ctx, isMultiField && Array.isArray(newFields) && newFields.length > 1);
-
             const request = ctx.getRequest();
-            //console.log(request.files, 'request.files');
+
+            if (safeFileCheckingMode === SafeFileCheckingModeEnum.EXPERIMENTAL) {
+                await this.validateUncheckedFiles();
+            } else if (safeFileCheckingMode === SafeFileCheckingModeEnum.ON_UPLOAD_INTERCEPTOR) {
+                await this.validateUncheckedFiles(request.files);
+            }
+
+            this.destructureRequestFiles(request, Array.isArray(newFields) && newFields.length > 1);
+
+            const maxCountsByFieldName = this.getMaxCountsByFieldName(fields);
             this.margeFilesIntoBody(request.files, request.body, maxCountsByFieldName);
 
             return next.handle();
@@ -134,8 +117,8 @@ export function UploadFilesInterceptor(
                 }),
                 fileFilter: this.fileTypeValidation(types),
                 limits: {
-                    files: maxCount,
                     fileSize: 2000000,
+                    files: maxCount,
                 },
                 ...localOptions,
             });
@@ -145,16 +128,15 @@ export function UploadFilesInterceptor(
             console.log('fileNameGenerator', file.fieldname + ' -> ' + file.originalname);
             //console.log( { file, previousCheckedFile: this.uncheckedFiles[this.currentCheckingQueueFileIndex] });
             const name = `${uuidv4()}${extname(file.originalname)}`;
-            const path = `${this.uploadsCoreDestination}\\${this.destinations[file.fieldname]}\\${name}`;
+            await cb(null, name); //! after this line, the creation of the file begins
 
-            await cb(null, name); //! after this file starting creation
+            if (safeFileCheckingMode === SafeFileCheckingModeEnum.EXPERIMENTAL && this.safeFileError !== NOTE_SAFE_FILES) {
+                const path = `${this.uploadsCoreDestination}\\${this.destinations[file.fieldname]}\\${name}`;
+                const result = await this.uploadService.checkFileExtension({ ...file, path });
+                console.log(file.fieldname + ' -> ' + file.originalname, result);
 
-            if (this.safeFileError !== 'NOT_VALID') {
-                const error = await this.uploadService.isFileExtensionSafe({ ...file, path });
-                console.log(file.fieldname + ' -> ' + file.originalname, error);
-
-                if (error && error !== 'VALID') {
-                    this.safeFileError = { message: error, path };
+                if (result && result !== SAFE_FILE) {
+                    this.safeFileError = { message: result, path };
                 } else {
                     this.uncheckedFiles.push({ ...file, path });
                 }
@@ -177,13 +159,13 @@ export function UploadFilesInterceptor(
                     return cb(new UnsupportedMediaTypeException(error), false);
                 }
 
-                if (this.safeFileError !== 'NOT_VALID' && this.safeFileError.message) {
+                if (safeFileCheckingMode === SafeFileCheckingModeEnum.EXPERIMENTAL && this.safeFileError !== NOTE_SAFE_FILES && this.safeFileError.message) {
                     const error = this.safeFileError.message;
-                    this.safeFileError = 'NOT_VALID';
+                    this.safeFileError = NOTE_SAFE_FILES;
                     return cb(new UnsupportedMediaTypeException(error), false);
                 }
 
-                return cb(null, this.safeFileError !== 'NOT_VALID');
+                return cb(null, this.safeFileError !== NOTE_SAFE_FILES);
             };
         }
 
@@ -205,26 +187,34 @@ export function UploadFilesInterceptor(
             };
         }
 
-        private destructureRequestFiles(ctx: HttpArgumentsHost, isManyFields: boolean): void {
-            const req = ctx.getRequest();
-            const files = req.files;
-
-            if (!isManyFields && files[0]) {
-                req.files = { [files?.[0].fieldname]: files };
+        private destructureRequestFiles(request: Request & { files: any }, isManyFields: boolean): void {
+            if (!isManyFields && request.files[0]) {
+                request.files = { [request.files?.[0].fieldname]: request.files };
             }
 
-            this.changeFilesPath(req);
+            this.changeFilesPath(request);
         }
 
-        private changeFilesPath(req): void {
-            req.files = _.mapValues(req.files, (files) => {
+        private changeFilesPath(request: Request & { files: any }): void {
+            request.files = _.mapValues(request.files, (files) => {
                 return Array.isArray(files)
                     ? files.map((file) => ({ ...file, publicPath: file.path.replace(`${this.configService.get(PUBLIC_FOLDER, 'public')}/`, '') }))
                     : [{ ...files, publicPath: files.path.replace(`${this.configService.get(PUBLIC_FOLDER, 'public')}/`, '') }];
             });
         }
 
-        private createNestedFilesObject(field: fileOption): fileOption | fileOption[] {
+        private getFields(fields: fileOption | fileOption[]): fileOption | fileOption[] {
+            let newFields;
+            if (Array.isArray(fields)) {
+                newFields = fields.map((field) => this.createNestedFileField(field)).flat(1);
+            } else if (fields.name.includes('[]')) {
+                newFields = this.createNestedFileField(fields);
+            }
+
+            return newFields;
+        }
+
+        private createNestedFileField(field: fileOption): fileOption | fileOption[] {
             const nestedFiles = [];
             const match = [...field.name.matchAll(this.nestedKeyRegex)];
 
@@ -243,7 +233,7 @@ export function UploadFilesInterceptor(
             return nestedFiles.length ? nestedFiles : field;
         }
 
-        private margeFilesIntoBody(requestFiles, body, maxCounts) {
+        private margeFilesIntoBody(requestFiles: TRequestFiles, body: Body, maxCounts: Record<string, number>): void {
             requestFiles.constructor.skipValidation = true;
             console.log('requestFiles');
 
@@ -273,7 +263,7 @@ export function UploadFilesInterceptor(
             }
         }
 
-        private getMaxCountsByFieldName(fields: fileOption | fileOption[]) {
+        private getMaxCountsByFieldName(fields: fileOption | fileOption[]): Record<string, number> {
             const maxCountsByFieldName = {};
 
             if (Array.isArray(fields)) {
@@ -291,6 +281,45 @@ export function UploadFilesInterceptor(
             }
 
             return maxCountsByFieldName;
+        }
+
+        private async validateUncheckedFiles(requestFiles: TRequestFiles = null): Promise<void> {
+            if (requestFiles) {
+                const requestFilesArray = Object.values(requestFiles).flat(1);
+
+                for (const uncheckedFile of requestFilesArray) {
+                    const result = await this.uploadService.checkFileExtension(uncheckedFile);
+                    if (result && result !== SAFE_FILE) {
+                        this.safeFileError = { message: result };
+                        break;
+                    }
+                }
+                if (!isString(this.safeFileError) && this.safeFileError.message) {
+                    await this.uploadService.removeFiles(requestFilesArray);
+                    throw new UnsupportedMediaTypeException(this.safeFileError.message);
+                }
+            } else {
+                if (!isString(this.safeFileError)) {
+                    if (this.uncheckedFiles.length) {
+                        if (!this.safeFileError.message) {
+                            for (const uncheckedFile of this.uncheckedFiles) {
+                                const result = await this.uploadService.checkFileExtension(uncheckedFile);
+                                if (result && result !== SAFE_FILE) {
+                                    this.safeFileError = { message: result };
+                                    break;
+                                }
+                            }
+                        } else {
+                            this.uploadService.remove(this.safeFileError.path);
+                        }
+                    }
+
+                    if (this.safeFileError.message) {
+                        await this.uploadService.removeFiles(this.uncheckedFiles);
+                        throw new UnsupportedMediaTypeException(this.safeFileError.message);
+                    }
+                }
+            }
         }
     }
 

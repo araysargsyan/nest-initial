@@ -1,23 +1,48 @@
-import { Injectable, Logger, UnsupportedMediaTypeException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import * as fs from 'fs';
 import * as FileType from 'file-type';
 import { extname } from 'path';
-import { TRequestFiles } from '@/common/types';
+import { SAFE_FILE } from '@/common/constants/upload.const';
+import { TRequestFiles } from '@/common/types/core';
 
 @Injectable()
 export class UploadService {
-    public async isFileExtensionSafe(options: Express.Multer.File): Promise<'VALID' | null | Record<string, Array<string>>> {
+    public async checkFileExtension(options: Express.Multer.File): Promise<typeof SAFE_FILE | null | Record<string, Array<string>>> {
         const { path, originalname, fieldname } = options;
         const ext = extname(path).slice(1);
         const originalExt = await FileType.fromFile(path)
-            .then((data) => data.ext)
-            .catch(() => null);
+            .then((data) => data?.ext)
+            .catch((e) => {
+                Logger.error(e);
+                return null;
+            });
+
+        console.log(3333, fieldname + ' -> ' + String(originalExt));
 
         if (ext !== originalExt) {
             return originalExt !== null ? { [fieldname]: [`${originalname} is broken file.`] } : null;
         }
 
-        return 'VALID';
+        return SAFE_FILE;
+    }
+
+    public async checkSafeFiles(files: TRequestFiles) {
+        const filesArray = this.getFilesArray(files);
+        let error;
+
+        for (const file of filesArray) {
+            const result = await this.checkFileExtension(file);
+
+            if (result && result !== SAFE_FILE) {
+                error = result;
+                break;
+            }
+        }
+
+        if (error) {
+            await this.removeFiles(filesArray);
+            return error;
+        }
     }
 
     public async removeFiles(files: TRequestFiles | Array<Express.Multer.File>): Promise<void> {

@@ -1,18 +1,31 @@
 import { ConfigService } from '@nestjs/config';
 import { DatabaseType } from 'typeorm';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { databaseRoot, dbConnectionConfig, dbConnections, dbDefaultConnection } from '@/common/constants/global.const';
-import { OrmSeedInterface } from '@/common/interfaces/orm-seed.interface';
 import { TablesEnum } from '@/common/enums/tables.enum';
 import { isBoolean, isString } from 'class-validator';
-import { TEntities } from '@/common/types';
+import {
+    databaseRoot,
+    dbConnectionConfig,
+    dbConnections,
+    DEFAULT_CONNECTION,
+    DB_DB,
+    DB_HOST,
+    DB_PASSWORD,
+    DB_PORT,
+    DB_TYPE,
+    DB_USER,
+} from '@/common/constants/database.const';
+import { OrmSeedInterface } from '@/common/interfaces/core';
+import { TEntities } from '@/common/types/core';
 
 export class OrmConfigService {
     private databaseType: DatabaseType;
+    private readonly dbDefaultConnectionType = dbConnectionConfig.DEFAULT.type;
+
     constructor(private readonly config: ConfigService) {}
 
-    public readonly get = (entities: TEntities = null, key = 'DEFAULT', registerAsDefault = false): OrmSeedInterface & TypeOrmModuleOptions => {
-        this.databaseType = key === 'DEFAULT' ? dbDefaultConnection : dbConnectionConfig[key].type;
+    public readonly get = (entities: TEntities = null, key: string = DEFAULT_CONNECTION, registerAsDefault = false): OrmSeedInterface & TypeOrmModuleOptions => {
+        this.databaseType = key === DEFAULT_CONNECTION ? this.dbDefaultConnectionType : dbConnectionConfig[key].type;
         const setupMigrationsAndSeeds = entities === null;
 
         let config = {
@@ -20,7 +33,7 @@ export class OrmConfigService {
             ...this.getBaseConnectionConfig(key, setupMigrationsAndSeeds ? [] : entities),
         } as OrmSeedInterface & TypeOrmModuleOptions;
 
-        if ((this.databaseType === dbDefaultConnection && setupMigrationsAndSeeds) || registerAsDefault) {
+        if ((this.databaseType === this.dbDefaultConnectionType && setupMigrationsAndSeeds) || registerAsDefault) {
             config = {
                 ...config,
                 ...this.getMigrationsAndSeedsConfig(),
@@ -30,23 +43,23 @@ export class OrmConfigService {
         return config;
     };
 
-    private readonly getEnvNamesPrefix = (key: string) => {
+    private getEnvNamesPrefix = (key: string) => {
         return dbConnectionConfig[key].prefix;
     };
 
-    private readonly getBaseConnectionConfig = (key: string, entities: TEntities): TypeOrmModuleOptions => {
+    private getBaseConnectionConfig = (key: string, entities: TEntities): TypeOrmModuleOptions => {
         const prefix = this.getEnvNamesPrefix(key);
 
         const baseConfig = {
-            type: this.config.get<string>(`${prefix}_TYPE`, this.databaseType),
+            type: this.config.get<string>(`${prefix}${DB_TYPE}`, this.databaseType),
 
-            host: this.config.get(`${prefix}_HOST`),
-            port: this.config.get<number>(`${prefix}_PORT`),
-            username: this.config.get(`${prefix}_USER`),
-            password: this.config.get(`${prefix}_PASSWORD`),
-            database: this.config.get(`${prefix}_DB`),
+            host: this.config.get(`${prefix}${DB_HOST}`),
+            port: this.config.get<number>(`${prefix}${DB_PORT}`),
+            username: this.config.get(`${prefix}${DB_USER}`),
+            password: this.config.get(`${prefix}${DB_PASSWORD}`),
+            database: this.config.get(`${prefix}${DB_DB}`),
 
-            entities: isBoolean(entities) && entities ? [] : isString(entities) ? [entities] : entities, //entities<string>: 'dist/**/*.entity{.ts,.js}',
+            entities: isBoolean(entities) && entities ? [] : isString(entities) ? [entities] : entities, //? entities<string>: 'dist/**/*.entity{.ts,.js}',
             autoLoadEntities: isBoolean(entities) && entities,
 
             synchronize: true,
@@ -58,7 +71,7 @@ export class OrmConfigService {
         return baseConfig;
     };
 
-    private readonly getMigrationsAndSeedsConfig = () => ({
+    private getMigrationsAndSeedsConfig = () => ({
         migrations: [`${__dirname}/${databaseRoot}/migrations/**/*{.ts,.js}`],
         migrationsTableName: TablesEnum.MIGRATIONS,
         //migrationsRun: true,

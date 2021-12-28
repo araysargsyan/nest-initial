@@ -3,8 +3,8 @@ import { TestDto } from './dto/test.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TestEntity } from './test.entity';
-import { dbConnections } from '@/common/constants/global.const';
 import { UserEntity } from '@/modules/user/user.entity';
+import { dbConnections } from '@/common/constants/database.const';
 
 @Injectable()
 export class TestService {

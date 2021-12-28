@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { UserModule } from './user/user.module';
 import { TestModule } from './test/test.module';
-import { ExtensionsModule } from './extensions';
+import { ExtensionsModule } from './extensions/extension.module';
 import { APP_PIPE } from '@nestjs/core';
 import { GlobalValidationPipe } from '@/core/pipes/global-validation.pipe';
 
