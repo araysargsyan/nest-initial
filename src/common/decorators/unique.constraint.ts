@@ -1,38 +1,30 @@
-import { registerDecorator, ValidationArguments, ValidationOptions, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
-import { Injectable, Logger } from '@nestjs/common';
+import { isString, registerDecorator, ValidationArguments, ValidationOptions, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/typeorm';
-import { Connection, EntityTarget, Repository } from 'typeorm';
+import { Connection } from 'typeorm';
 import { CustomConstraintsEnum } from '@/common/enums/custom-constraints.enum';
-import { TablesEnum } from '@/common/enums/tables.enum';
 import { dbConnections } from '@/common/constants/database.const';
+import { IUniqueDtoConstructor } from '@/common/interfaces';
+import { capitalize } from 'lodash';
+import { TClass, TUniqueConstraintDtoConstructor, TUniqueConstraintEntity } from '@/common/types';
+import { exception } from '@/common/helpers/get-exception';
 
 @ValidatorConstraint({ name: CustomConstraintsEnum.IS_UNIQUE, async: true })
 @Injectable()
 export class UniqueConstraint implements ValidatorConstraintInterface {
     private existingFields: string[] = [];
-    protected repo: Repository<any>;
 
     constructor(@InjectConnection(dbConnections.DEFAULT) private readonly connection: Connection) {}
-
-    private async getOneOrFail(operators): Promise<any> {
-        const item = await this.repo.findOne({ where: operators });
-        return item;
-    }
 
     async validate(value: number, args: ValidationArguments) {
         Logger.debug('', 'UniqueConstraint');
 
         const arrayFromObjKeys = Object.keys(args.object);
         if (arrayFromObjKeys[arrayFromObjKeys.length - 1] === args.property) {
-            const dto: any = args.object.constructor;
-
-            console.log(dto);
-            const table: TablesEnum | EntityTarget<any> = dto.table;
-            const entity = typeof table === 'string' ? this.connection.getMetadata(table).tableMetadataArgs.target : table;
-            this.repo = this.connection.getRepository(entity);
-
+            const dtoClass = args.object.constructor as TUniqueConstraintDtoConstructor;
+            const entity = this.getEntity(dtoClass);
             const operators = arrayFromObjKeys.map((key) => ({ [key]: args.object[key] }));
-            const item = await this.getOneOrFail(operators);
+            const item = await this.getOneOrFail(operators, entity);
 
             item && Object.keys(item).forEach((key) => arrayFromObjKeys.includes(key) && item[key] === args.object[key] && this.existingFields.push(key));
 
@@ -48,14 +40,24 @@ export class UniqueConstraint implements ValidatorConstraintInterface {
             this.existingFields = [];
             const messages = {};
 
-            existingFields.forEach((f) => (messages[f] = [`${f.charAt(0).toUpperCase() + f.slice(1)} already exist`]));
+            existingFields.forEach((field) => (messages[field] = [exception('isUnique', 'validation') /*`${capitalize(field)} already exist`*/]));
             return JSON.stringify(messages);
         }
     }
+
+    private async getOneOrFail(operators, entity): Promise<any> {
+        const repository = this.connection.getRepository(entity);
+        return repository.findOne({ where: operators });
+    }
+
+    private getEntity(dtoClass: TUniqueConstraintDtoConstructor) {
+        return dtoClass.table ? this.connection.getMetadata(dtoClass.table).tableMetadataArgs.target : dtoClass.getTable ? dtoClass.getTable() : null;
+    }
 }
 
-export function Unique(validationOptions?: ValidationOptions) {
+export function Unique(tableName: string = null, validationOptions?: ValidationOptions) {
     return function (target: any, propertyName: string) {
+        tableName && !target.constructor.table && (target.constructor.table = tableName);
         registerDecorator({
             name: CustomConstraintsEnum.IS_UNIQUE,
             target: target.constructor,
@@ -66,6 +68,15 @@ export function Unique(validationOptions?: ValidationOptions) {
     };
 }
 
-export function UseUnique(constructor: any) {
-    constructor.constraints = constructor?.constraints ? constructor.constraints.push(CustomConstraintsEnum.IS_UNIQUE) : [CustomConstraintsEnum.IS_UNIQUE];
+export function UseUnique(entity: TUniqueConstraintEntity, UniquesClass: TClass): (constructor: any) => void {
+    return function (constructor: IUniqueDtoConstructor): void {
+        constructor.UniquesClass = UniquesClass;
+        constructor.isUnique = CustomConstraintsEnum.IS_UNIQUE;
+
+        if (isString(entity)) {
+            constructor.table = entity;
+        } else {
+            constructor.getTable = entity;
+        }
+    };
 }

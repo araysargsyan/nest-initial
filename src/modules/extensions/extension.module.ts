@@ -1,11 +1,15 @@
-import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { dbConnectionsConfig } from '../../config/ormconfig';
+import { Inject, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { dbConnectionsConfig } from '../../config/orm.config';
 import { UploadModule } from './upload/upload.module';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './auth/auth.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { resolve } from 'path';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { PUBLIC_FOLDER } from '@/common/constants/upload.const';
+import { BaseCacheModule } from '@/modules/extensions/cache/cache.module';
 
 @Module({
     imports: [
@@ -15,6 +19,17 @@ import { APP_GUARD } from '@nestjs/core';
             isGlobal: true,
             load: [dbConnectionsConfig],
         }),
+        ServeStaticModule.forRootAsync({
+            imports: [ConfigModule],
+            inject: [ConfigService],
+            useFactory: (configService) => [
+                {
+                    rootPath: resolve(configService.get(PUBLIC_FOLDER)),
+                },
+            ],
+        }),
+        //RedisModule,
+        //BaseCacheModule,
         ThrottlerModule.forRoot({
             ttl: 60,
             limit: 30,

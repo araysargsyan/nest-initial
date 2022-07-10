@@ -14,14 +14,15 @@ export class UserController {
     constructor(private userService: UserService) {}
 
     @Get('/')
-    @UseInterceptors(new ResponseInterceptor(UserResponseDto))
+    //@UseInterceptors(new ResponseInterceptor(UserResponseDto))
     async getUser(@User() user: JwtPayloadInterface): Promise<UserEntity> {
         return await this.userService.get({ id: user.id });
     }
 
-    @Get('/')
+    @Get('/all')
     //@Redirect('https://docs.nestjs.com', 302)
     async findAll() {
+        console.log('findAll');
         return await this.userService.findAll();
     }
 

@@ -1,29 +1,10 @@
-import { TestEntity } from '@/modules/test/test.entity';
-import { UserEntity } from '@/modules/user/user.entity';
 import { getDbConnections } from '@/common/helpers/get-db-connections';
-import { TDbConnectionsConfig } from '@/common/types/core';
-
-export const dbConnectionConfig: TDbConnectionsConfig<'MYSQL' /* | 'POSTGRES'*/> = {
-    //* key is connection name to lower case
-    DEFAULT: {
-        type: 'postgres',
-        prefix: 'DB',
-        entities: true,
-    },
-    MYSQL: {
-        type: 'mysql',
-        prefix: 'MYSQL',
-        entities: [TestEntity, UserEntity],
-    },
-};
-export const databaseRoot = 'database'; //* src/database
+import { dbConfig } from '@/config/db.config';
 
 //! CORE
 export const DEFAULT_CONNECTION = 'DEFAULT' as const;
 export const DB_CONFIG = 'DB_CONFIG' as const;
-
-//! NOT CHANGEABLE
-export const dbConnections = getDbConnections(dbConnectionConfig);
+export const dbConnections = getDbConnections(dbConfig); //* NOT CHANGEABLE
 
 //! ENV
 export const DB_TYPE = '_TYPE' as const;

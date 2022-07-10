@@ -3,7 +3,7 @@ import { DeleteResult, FindConditions, FindOneOptions } from 'typeorm';
 import { UserEntity } from './user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UsersRepository } from './user.repository';
-import { CreateUserDto } from './dto/createUser.dto';
+import { UserCreateDto } from './dto/user.create.dto';
 
 @Injectable()
 export class UserService {
@@ -12,17 +12,17 @@ export class UserService {
         private usersRepository: UsersRepository,
     ) {}
 
-    async get(params?: FindConditions<UserEntity>, options?: FindOneOptions<UserEntity>): Promise<UserEntity> {
+    async get(params: FindConditions<UserEntity> = {}, options: FindOneOptions<UserEntity> = {}, withoutError = false): Promise<UserEntity> {
         const user = await this.usersRepository.findOne(params, options);
 
-        if (!user) {
+        if (!user && !withoutError) {
             throw new NotFoundException('User not found');
         }
 
         return user;
     }
 
-    async create(createUserDto: CreateUserDto): Promise<UserEntity> {
+    async create(createUserDto: UserCreateDto): Promise<UserEntity> {
         const user = await this.usersRepository.createUser(createUserDto);
         await this.createAndSendVerificationCode(user, false);
 
@@ -51,7 +51,7 @@ export class UserService {
         // this.mailService.sendUserConfirmation(user.email, `${user.firstName} ${user.lastName}`, code);
     }
 
-    async findAll(): Promise<UserEntity[] | any> {
+    async findAll(): Promise<UserEntity[]> {
         const users = await this.usersRepository.find();
         //console.log(user)
         return users;

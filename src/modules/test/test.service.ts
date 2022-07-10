@@ -9,7 +9,7 @@ import { dbConnections } from '@/common/constants/database.const';
 @Injectable()
 export class TestService {
     constructor(
-        @InjectRepository(TestEntity, dbConnections.MYSQL)
+        @InjectRepository(TestEntity, dbConnections.SECOND)
         @InjectRepository(TestEntity, dbConnections.DEFAULT)
         private repo: Repository<TestEntity & UserEntity>,
     ) {}

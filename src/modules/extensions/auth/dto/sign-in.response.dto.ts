@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import { UserResponseDto } from '@/modules/user/dto/user.response.dto';
 
-export class SingUpResponseDto {
+export class SignInResponseDto {
     accessToken: string;
 
     @Type(() => UserResponseDto)

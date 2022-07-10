@@ -1,8 +1,8 @@
 import { UserEntity } from '@/modules/user/user.entity';
 import { Exclude } from 'class-transformer';
-import { SkipValidation } from '@/common/utils/skip-validation.util';
+import { ValidationOptions } from '@/common/decorators/validation-options.decorator';
 
-export class UserResponseDto extends SkipValidation implements Partial<UserEntity> {
+export class UserResponseDto implements Partial<UserEntity> {
     @Exclude()
     password: string;
 }

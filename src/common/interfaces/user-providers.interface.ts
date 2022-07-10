@@ -1,5 +1,4 @@
-import { AuthEnum } from '@/common/enums/auth.enum';
-
 export interface UserProviderInterface {
-    providerId: string | number;
+    id: string | number;
+    emails: Array<string>;
 }

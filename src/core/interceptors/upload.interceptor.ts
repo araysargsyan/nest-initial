@@ -234,7 +234,7 @@ export function UploadFilesInterceptor(
         }
 
         private margeFilesIntoBody(requestFiles: TRequestFiles, body: Body, maxCounts: Record<string, number>): void {
-            requestFiles.constructor.skipValidation = true;
+            requestFiles.constructor.validationOptions = null;
             console.log('requestFiles');
 
             for (const key in requestFiles) {

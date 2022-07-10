@@ -1,13 +1,22 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { plainToClass } from 'class-transformer';
+import { ClassConstructor, classToPlain, deserialize, plainToClass, serialize } from 'class-transformer';
+import { ClassSerializerInterceptor, ClassSerializerInterceptorOptions } from '@nestjs/common/serializer/class-serializer.interceptor';
 
 @Injectable()
-export class ResponseInterceptor<T> implements NestInterceptor {
-    constructor(private readonly dtoType: any) {}
+export class ResponseInterceptor<T> extends ClassSerializerInterceptor {
+    constructor(reflector: any, defaultOptions?: ClassSerializerInterceptorOptions) {
+        super(reflector, defaultOptions);
+    }
 
     intercept(context: ExecutionContext, next: CallHandler<T>): Observable<T> {
-        return next.handle().pipe(map((data) => plainToClass(this.dtoType, data)));
+        return next.handle().pipe(
+            map((data): any => {
+                Logger.debug('', 'ResponseInterceptor');
+                //console.log(data && plainToClass(data.constructor as ClassConstructor<any>, data));
+                return data ? classToPlain(data) : null;
+            }),
+        );
     }
 }

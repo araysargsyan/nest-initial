@@ -3,29 +3,21 @@ import { DatabaseType } from 'typeorm';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { TablesEnum } from '@/common/enums/tables.enum';
 import { isBoolean, isString } from 'class-validator';
-import {
-    databaseRoot,
-    dbConnectionConfig,
-    dbConnections,
-    DEFAULT_CONNECTION,
-    DB_DB,
-    DB_HOST,
-    DB_PASSWORD,
-    DB_PORT,
-    DB_TYPE,
-    DB_USER,
-} from '@/common/constants/database.const';
+import { dbConnections, DEFAULT_CONNECTION, DB_DB, DB_HOST, DB_PASSWORD, DB_PORT, DB_TYPE, DB_USER } from '@/common/constants/database.const';
 import { OrmSeedInterface } from '@/common/interfaces/core';
 import { TEntities } from '@/common/types/core';
+import { Injectable } from '@nestjs/common';
+import { dbRoot, dbConfig } from '@/config/db.config';
 
+@Injectable()
 export class OrmConfigService {
     private databaseType: DatabaseType;
-    private readonly dbDefaultConnectionType = dbConnectionConfig.DEFAULT.type;
+    private readonly dbDefaultConnectionType = dbConfig.DEFAULT.type;
 
     constructor(private readonly config: ConfigService) {}
 
     public readonly get = (entities: TEntities = null, key: string = DEFAULT_CONNECTION, registerAsDefault = false): OrmSeedInterface & TypeOrmModuleOptions => {
-        this.databaseType = key === DEFAULT_CONNECTION ? this.dbDefaultConnectionType : dbConnectionConfig[key].type;
+        this.databaseType = key === DEFAULT_CONNECTION ? this.dbDefaultConnectionType : dbConfig[key].type;
         const setupMigrationsAndSeeds = entities === null;
 
         let config = {
@@ -44,7 +36,7 @@ export class OrmConfigService {
     };
 
     private getEnvNamesPrefix = (key: string) => {
-        return dbConnectionConfig[key].prefix;
+        return dbConfig[key].prefix;
     };
 
     private getBaseConnectionConfig = (key: string, entities: TEntities): TypeOrmModuleOptions => {
@@ -72,13 +64,13 @@ export class OrmConfigService {
     };
 
     private getMigrationsAndSeedsConfig = () => ({
-        migrations: [`${__dirname}/${databaseRoot}/migrations/**/*{.ts,.js}`],
+        migrations: [`${__dirname}/${dbRoot}/migrations/**/*{.ts,.js}`],
         migrationsTableName: TablesEnum.MIGRATIONS,
         //migrationsRun: true,
         cli: {
-            migrationsDir: `src/${databaseRoot}/migrations`,
+            migrationsDir: `src/${dbRoot}/migrations`,
         },
-        seeds: [`src/${databaseRoot}/seeds/**/*{.ts,.js}`],
-        factories: [`src/${databaseRoot}/factories/**/*{.ts,.js}`],
+        seeds: [`src/${dbRoot}/seeds/**/*{.ts,.js}`],
+        factories: [`src/${dbRoot}/factories/**/*{.ts,.js}`],
     });
 }
